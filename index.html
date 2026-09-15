@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SIMX Quantum Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #060312;
+            --card-bg: #120B26;
+            --card-border: #2A1B54;
+            --purple-neon: #A855F7;
+            --simurgh-gold: #F3C623;
+            --bull-green: #00E676;
+            --bear-red: #FF3D00;
+            --text-main: #FAFAFA;
+            --text-sub: #948EA5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(180deg, var(--bg-dark) 0%, #0A0620 100%);
+            color: var(--text-main);
+            overflow-x: hidden;
+            padding-bottom: 90px;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: rgba(18, 11, 38, 0.85);
+            backdrop-filter: blur(15px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .logo-box { display: flex; align-items: center; gap: 10px; }
+
+        .simurgh-icon {
+            width: 44px;
+            height: 44px;
+            background: radial-gradient(circle, rgba(243, 198, 35, 0.25) 0%, transparent 70%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 20px rgba(243, 198, 35, 0.2);
+        }
+
+        .brand-title {
+            color: var(--simurgh-gold);
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+        }
+
+        .brand-sub {
+            color: var(--purple-neon);
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            color: var(--bull-green);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background-color: var(--bull-green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 10px var(--bull-green);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .market-switcher {
+            display: flex;
+            margin: 16px 20px 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 4px;
+        }
+
+        .switch-btn {
+            flex: 1;
+            padding: 11px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-sub);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .switch-btn.active {
+            background: linear-gradient(135deg, var(--purple-neon), #7C3AED);
+            color: #FFF;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .symbol-bar {
+            display: flex;
+            gap: 10px;
+            padding: 8px 20px 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .symbol-bar::-webkit-scrollbar { display: none; }
+
+        .symbol-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 9px 18px;
+            border-radius: 18px;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .symbol-btn.active {
+            background: var(--simurgh-gold);
+            color: var(--bg-dark);
+            border-color: var(--simurgh-gold);
+            box-shadow: 0 4px 15px rgba(243, 198, 35, 0.4);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 22px;
+            margin: 0 20px 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .price-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-name { font-size: 18px; font-weight: bold; }
+        .asset-symbol { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+        .live-price { font-size: 24px; font-weight: 900; text-align: left; }
+        .price-change { font-size: 12px; font-weight: bold; text-align: left; margin-top: 2px; }
+
+        #tv-chart {
+            width: 100%;
+            height: 220px;
+            margin-top: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #09051B;
+        }
+
+        .bias-badge {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 16px;
+        }
+
+        .bias-bull { background: rgba(0, 230, 118, 0.12); border: 1px solid rgba(0, 230, 118, 0.3); color: var(--bull-green); }
+        .bias-bear { background: rgba(255, 61, 0, 0.12); border: 1px solid rgba(255, 61, 0, 0.3); color: var(--bear-red); }
+        .bias-neutral { background: rgba(243, 198, 35, 0.12); border: 1px solid rgba(243, 198, 35, 0.3); color: var(--simurgh-gold); }
+
+        .narrative-title { font-size: 12px; color: var(--purple-neon); font-weight: bold; margin-top: 14px; }
+        .narrative-text { font-size: 13px; color: var(--text-sub); line-height: 1.7; margin-top: 6px; }
+
+        .radar-container {
+            margin-top: 16px;
+            padding: 14px;
+            background: rgba(168, 85, 247, 0.05);
+            border-radius: 14px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .radar-title {
+            font-size: 12px;
+            color: var(--simurgh-gold);
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .sensor-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .sensor-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+        }
+
+        .sensor-name { color: var(--text-sub); }
+        .sensor-score { color: var(--bull-green); font-weight: bold; }
+
+        .signal-box {
+            background: rgba(0, 230, 118, 0.06);
+            border: 1px dashed var(--bull-green);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .signal-box.sell {
+            background: rgba(255, 61, 0, 0.06);
+            border-color: var(--bear-red);
+        }
+
+        .signal-box.wait {
+            background: rgba(243, 198, 35, 0.06);
+            border-color: var(--simurgh-gold);
+        }
+
+        .signal-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .trade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .trade-item label {
+            color: var(--text-sub);
+            display: block;
+            font-size: 10px;
+            margin-bottom: 3px;
+        }
+
+        .trade-item .val {
+            color: var(--text-main);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .execute-btn {
+            width: 100%;
+            background: var(--simurgh-gold);
+            color: var(--bg-dark);
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 900;
+            margin-top: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(243, 198, 35, 0.4);
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(18, 11, 38, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 14px;
+            z-index: 100;
+        }
+
+        .nav-item {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--simurgh-gold);
+            font-weight: bold;
+        }
+
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 3px; }
+
+        .up { color: var(--bull-green); }
+        .down { color: var(--bear-red); }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <div class="logo-box">
+            <div class="simurgh-icon">🦅</div>
+            <div>
+                <div class="brand-title">SIMX</div>
+                <div class="brand-sub">AI OPERATING SYSTEM</div>
+            </div>
+        </div>
+        <div class="status-badge">
+            <div class="pulse-dot"></div>
+            <span>۲۱ سنسور زنده</span>
+        </div>
+    </div>
+
+    <div class="market-switcher">
+        <div class="switch-btn active" id="tab-crypto" onclick="switchMarket('crypto')">💎 کریپتوکارنسی</div>
+        <div class="switch-btn" id="tab-forex" onclick="switchMarket('forex')">🌐 فارکس و طلا</div>
+    </div>
+
+    <div class="symbol-bar" id="symbol-bar"></div>
+
+    <div class="card">
+        <div class="price-header">
+            <div>
+                <div class="asset-name" id="asset-name">بیت‌کوین</div>
+                <div class="asset-symbol" id="asset-symbol">BTC/USDT</div>
+            </div>
+            <div>
+                <div class="live-price up" id="live-price">$67,850.00</div>
+                <div class="price-change up" id="price-change">+3.42%</div>
+            </div>
+        </div>
+
+        <div id="tv-chart"></div>
+
+        <div class="bias-badge bias-bull" id="bias-badge">🎯 تحلیل هوش مصنوعی: صعودی قدرتمند | اطمینان: ۸۸٪</div>
+
+        <div class="narrative-title">📖 داستان و منطق بازار (Market Narrative):</div>
+        <div class="narrative-text" id="narrative-text">
+            سنسور Order Flow ورود ۱۲.۴ میلیون دلار سفارش خرید تهاجمی را ثبت کرد. هم‌راستایی ساختار قیمت در تایم‌فریم ۴ ساعته نشان‌دهنده آماده‌سازی برای شکست مقاومت ۶۹,۲۰۰ دلار است.
+        </div>
+
+        <div class="radar-container">
+            <div class="radar-title">🕸️ رادار ۲۱ سنسور هوش مصنوعی</div>
+            <div class="sensor-list" id="sensor-list"></div>
+        </div>
+
+        <div class="signal-box" id="signal-box">
+            <div class="signal-title up" id="signal-title">🟢 سیگنال پیشنهادی: خرید (LONG)</div>
+            <div class="trade-grid">
+                <div class="trade-item"><label>محدوده ورود:</label><div class="val" id="val-entry">$67,100 - $67,400</div></div>
+                <div class="trade-item"><label>حد ضرر (SL):</label><div class="val down" id="val-sl">$66,150</div></div>
+                <div class="trade-item"><label>حد سود (TP):</label><div class="val up" id="val-tp">$69,800</div></div>
+                <div class="trade-item"><label>نسبت سود/ریسک:</label><div class="val" style="color:var(--simurgh-gold)" id="val-rr">1 : 2.4</div></div>
+            </div>
+            <button class="execute-btn" onclick="executeTrade()">🚀 ارسال معامله به صرافی / بروکر</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <span class="nav-icon">📊</span>
+            داشبورد
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">📅</span>
+            رویدادها
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">🤖</span>
+            چت هوش
+        </div>
+        <div class="nav-item">
+            <span class="nav-icon">👤</span>
+            حساب VIP
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) { tg.expand(); tg.ready(); tg.setHeaderColor('#060312'); }
+
+        const marketData = {
+            crypto: [
+                { symbol: 'BTCUSDT', name: 'بیت‌کوین', price: 67850, change: 3.42, bias: 'صعودی قدرتمند', biasClass: 'bull', conf: 88, narrative: 'سنسور Order Flow ورود ۱۲.۴ میلیون دلار سفارش خرید تهاجمی را ثبت کرد. استخر نقدینگی سقف آماده فتح است.', action: 'خرید (LONG)', actionClass: 'up', boxClass: '', entry: '$67,100 - $67,400', sl: '$66,150', tp: '$69,800', rr: '1 : 2.4' },
+                { symbol: 'ETHUSDT', name: 'اتریوم', price: 3540, change: 2.10, bias: 'صعودی', biasClass: 'bull', conf: 79, narrative: 'افزایش حجم معاملات در شبکه‌های لایه دو. روند صعودی همگام با بیت‌کوین تثبیت شده است.', action: 'خرید (LONG)', actionClass: 'up', boxClass: '', entry: '$3,490 - $3,510', sl: '$3,420', tp: '$3,680', rr: '1 : 2.1' },
+                { symbol: 'SOLUSDT', name: 'سولانا', price: 148.50, change: 8.50, bias: 'صعودی شدید', biasClass: 'bull', conf: 91, narrative: 'ردپای جریان سرمایه نهادی در بلاکچین. خروج اکید فروشندگان و آمادگی برای رالی صعودی.', action: 'خرید (LONG)', actionClass: 'up', boxClass: '', entry: '$144 - $146', sl: '$138', tp: '$162', rr: '1 : 2.7' },
+                { symbol: 'BNBUSDT', name: 'بایننس‌کوین', price: 588, change: -0.90, bias: 'اصلاحی / رنج', biasClass: 'neutral', conf: 52, narrative: 'قیمت در محدوده مقاومتی ۵۹۵ دلار متوقف شده است. تا زمان ثبت CHOCH صعودی، معامله جدید ریسک دارد.', action: 'صبر کنید', actionClass: '', boxClass: 'wait', entry: '-', sl: '-', tp: '-', rr: '-' },
+                { symbol: 'XRPUSDT', name: 'ریپل', price: 0.625, change: 0.30, bias: 'فشردگی نوسان', biasClass: 'neutral', conf: 58, narrative: 'سنسور نوسان فشردگی شدیدی را نشان می‌دهد. احتمال انفجار قیمتی به زودی بسیار بالا است.', action: 'صبر کنید', actionClass: '', boxClass: 'wait', entry: '-', sl: '-', tp: '-', rr: '-' },
+                { symbol: 'ADAUSDT', name: 'کاردانو', price: 0.445, change: -3.10, bias: 'نزولی', biasClass: 'bear', conf: 74, narrative: 'شکست ساختار حمایتی و تایید BOS نزولی. واگرایی منفی در دلتای خریداران.', action: 'فروش (SHORT)', actionClass: 'down', boxClass: 'sell', entry: '$0.452 - $0.458', sl: '$0.472', tp: '$0.395', rr: '1 : 2.2' }
+            ],
+            forex: [
+                { symbol: 'XAUUSD', name: 'انس جهانی طلا', price: 2348.80, change: 1.12, bias: 'هشدار خبر کلان', biasClass: 'neutral', conf: 55, narrative: 'طلا در نزدیکی مرز تاریخی قرار دارد. کمتر از ۲ ساعت تا انتشار آمار تورم آمریکا (CPI) باقی مانده است.', action: 'صبر کنید', actionClass: '', boxClass: 'wait', entry: '-', sl: '-', tp: '-', rr: '-' },
+                { symbol: 'EURUSD', name: 'یورو / دلار', price: 1.0818, change: -0.55, bias: 'نزولی', biasClass: 'bear', conf: 76, narrative: 'تقویت شاخص دلار (DXY) بر سایر جفت‌ارزها فشار می‌آورد. ساختار LH-LL در تایم ۴ ساعته فعال است.', action: 'فروش (SHORT)', actionClass: 'down', boxClass: 'sell', entry: '1.0835 - 1.0850', sl: '1.0890', tp: '1.0740', rr: '1 : 2.0' },
+                { symbol: 'GBPUSD', name: 'پوند / دلار', price: 1.2635, change: -0.15, bias: 'تعادل موقت', biasClass: 'neutral', conf: 49, narrative: 'قیمت بین دو منطقه عرضه و تقاضا محصور است. لایه Fusion دستور عدم ورود صادر کرده است.', action: 'صبر کنید', actionClass: '', boxClass: 'wait', entry: '-', sl: '-', tp: '-', rr: '-' }
+            ]
+        };
+
+        const sensorNames = [
+            { name: 'Price Action', score: 92 },
+            { name: 'Order Flow', score: 88 },
+            { name: 'Wyckoff', score: 76 },
+            { name: 'Volume Analysis', score: 84 },
+            { name: 'Market Regime', score: 79 },
+            { name: 'Liquidity Pool', score: 91 },
+            { name: 'Smart Money', score: 87 },
+            { name: 'Sentiment', score: 68 },
+            { name: 'On-Chain Data', score: 82 },
+            { name: 'Macro Events', score: 55 }
+        ];
+
+        let currentMarket = 'crypto';
+        let currentSymbol = 'BTCUSDT';
+        let chart, candlestickSeries, binanceWS;
+
+        function initChart() {
+            const container = document.getElementById('tv-chart');
+            container.innerHTML = '';
+            chart = LightweightCharts.createChart(container, {
+                layout: { background: { color: '#09051B' }, textColor: '#948EA5' },
+                grid: { vertLines: { color: '#1A1238' }, horzLines: { color: '#1A1238' } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                rightPriceScale: { borderColor: '#2A1B54' },
+                timeScale: { borderColor: '#2A1B54', timeVisible: true, secondsVisible: false }
+            });
+            candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#00E676', downColor: '#FF3D00',
+                borderUpColor: '#00E676', borderDownColor: '#FF3D00',
+                wickUpColor: '#00E676', wickDownColor: '#FF3D00'
+            });
+            loadChartHistory(currentSymbol);
+        }
+
+        async function loadChartHistory(symbol) {
+            try {
+                const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=100`);
+                const data = await res.json();
+                const candles = data.map(c => ({
+                    time: c[0] / 1000,
+                    open: parseFloat(c[1]),
+                    high: parseFloat(c[2]),
+                    low: parseFloat(c[3]),
+                    close: parseFloat(c[4])
+                }));
+                candlestickSeries.setData(candles);
+            } catch (e) {
+                console.warn('Chart data unavailable', e);
+            }
+        }
+
+        function renderSymbols() {
+            const bar = document.getElementById('symbol-bar');
+            bar.innerHTML = '';
+            marketData[currentMarket].forEach(asset => {
+                const btn = document.createElement('div');
+                btn.className = `symbol-btn ${asset.symbol === currentSymbol ? 'active' : ''}`;
+                btn.innerText = asset.symbol;
+                btn.onclick = () => selectSymbol(asset.symbol);
+                bar.appendChild(btn);
+            });
+        }
+
+        function renderSensors() {
+            const list = document.getElementById('sensor-list');
+            list.innerHTML = '';
+            sensorNames.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'sensor-item';
+                const scoreColor = s.score >= 70 ? 'var(--bull-green)' : s.score >= 50 ? 'var(--simurgh-gold)' : 'var(--bear-red)';
+                item.innerHTML = `<span class="sensor-name">${s.name}</span><span class="sensor-score" style="color:${scoreColor}">${s.score}%</span>`;
+                list.appendChild(item);
+            });
+        }
+
+        function switchMarket(market) {
+            currentMarket = market;
+            document.getElementById('tab-crypto').classList.toggle('active', market === 'crypto');
+            document.getElementById('tab-forex').classList.toggle('active', market === 'forex');
+            currentSymbol = marketData[market][0].symbol;
+            renderSymbols();
+            updateUI();
+            if (market === 'crypto') {
+                loadChartHistory(currentSymbol);
+                connectBinanceLive();
+            }
+        }
+
+        function selectSymbol(sym) {
+            currentSymbol = sym;
+            renderSymbols();
+            updateUI();
+            if (currentMarket === 'crypto') {
+                loadChartHistory(sym);
+                connectBinanceLive();
+            }
+        }
+
+        function updateUI() {
+            const asset = marketData[currentMarket].find(a => a.symbol === currentSymbol);
+            if (!asset) return;
+            document.getElementById('asset-name').innerText = asset.name;
+            document.getElementById('asset-symbol').innerText = asset.symbol;
+            document.getElementById('live-price').innerText = `$${asset.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}`;
+            document.getElementById('live-price').className = `live-price ${asset.change >= 0 ? 'up' : 'down'}`;
+            const changeEl = document.getElementById('price-change');
+            changeEl.innerText = `${asset.change >= 0 ? '+' : ''}${asset.change.toFixed(2)}%`;
+            changeEl.className = `price-change ${asset.change >= 0 ? 'up' : 'down'}`;
+            const biasEl = document.getElementById('bias-badge');
+            biasEl.innerText = `🎯 تحلیل هوش مصنوعی: ${asset.bias} | اطمینان: ${asset.conf}٪`;
+            biasEl.className = `bias-badge bias-${asset.biasClass}`;
+            document.getElementById('narrative-text').innerText = asset.narrative;
+            const box = document.getElementById('signal-box');
+            box.className = `signal-box ${asset.boxClass}`;
+            const titleEl = document.getElementById('signal-title');
+            const icon = asset.actionClass === 'up' ? '🟢' : asset.actionClass === 'down' ? '🔴' : '🟡';
+            titleEl.innerText = `${icon} سیگنال پیشنهادی: ${asset.action}`;
+            titleEl.className = `signal-title ${asset.actionClass}`;
+            document.getElementById('val-entry').innerText = asset.entry;
+            document.getElementById('val-sl').innerText = asset.sl;
+            document.getElementById('val-tp').innerText = asset.tp;
+            document.getElementById('val-rr').innerText = asset.rr;
+        }
+
+        function connectBinanceLive() {
+            if (binanceWS) binanceWS.close();
+            const symLow = currentSymbol.toLowerCase();
+            binanceWS = new WebSocket(`wss://stream.binance.com:9443/ws/${symLow}@ticker`);
+            binanceWS.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const price = parseFloat(data.c);
+                const change = parseFloat(data.P);
+                const asset = marketData[currentMarket].find(a => a.symbol === currentSymbol);
+                if (asset) {
+                    asset.price = price;
+                    asset.change = change;
+                }
+                document.getElementById('live-price').innerText = `$${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}`;
+                document.getElementById('live-price').className = `live-price ${change >= 0 ? 'up' : 'down'}`;
+                const changeEl = document.getElementById('price-change');
+                changeEl.innerText = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+                changeEl.className = `price-change ${change >= 0 ? 'up' : 'down'}`;
+            };
+        }
+
+        function executeTrade() {
+            const msg = `دستور معامله روی ${currentSymbol} با موفقیت ثبت شد و به صرافی ارسال گردید.`;
+            if (tg && tg.showAlert) tg.showAlert(msg);
+            else alert(msg);
+        }
+
+        window.onload = () => {
+            renderSymbols();
+            renderSensors();
+            initChart();
+            updateUI();
+            connectBinanceLive();
+        };
+    </script>
+</body>
+</html>
